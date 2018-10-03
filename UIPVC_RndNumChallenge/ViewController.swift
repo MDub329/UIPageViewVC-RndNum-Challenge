@@ -11,6 +11,7 @@ import UIKit
 class ProjectorPageViewController: UIPageViewController, UIPageViewControllerDataSource {
 
     let imageNames = ["toys_retro_0","toys_retro_1","toys_retro_2","toys_retro_3","toys_retro_4","toys_retro_5"]
+    let frameUIPageVC = UIPageVC()
     
     override var preferredStatusBarStyle: UIStatusBarStyle{
         return .lightContent
@@ -24,14 +25,17 @@ class ProjectorPageViewController: UIPageViewController, UIPageViewControllerDat
     }
     
     func setUpRotater() {
-        let frameUIPageVC = UIPageVC()
-        frameUIPageVC.imageName = imageNames.first
-        let viewController = [frameUIPageVC]
-        setViewControllers(viewController, direction: .forward, animated: true, completion: nil)
+        setViewControllers([controllers.first!], direction: .forward, animated: true, completion: nil)
         view.addSubview(randomButton)
         randomButton.anchor(top: nil, leading: nil, bottom: view.safeAreaLayoutGuide.bottomAnchor, trailing: nil, padding: .init(top: 0, left: 0, bottom: 20, right: 0), size: .init(width: 100, height: 50))
         
         randomButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor).isActive = true
+    }
+    
+    let controllers = (0...5).map { (i) -> UIPageVC in
+        let vc = UIPageVC()
+        vc.prizeIndex = i
+        return vc
     }
     
     let randomButton: UIButton = {
@@ -47,21 +51,26 @@ class ProjectorPageViewController: UIPageViewController, UIPageViewControllerDat
     }()
     
     @objc func rndButtonClick() {
-        let rndNum = Int.random(in: 0...5)
-        let framePageVC = UIPageVC()
-        framePageVC.imageName = imageNames[rndNum]
-        let frameViewController1 = [framePageVC]
-        setViewControllers(frameViewController1, direction: .forward, animated: true, completion: nil)
+        let currentIndex = controllers.firstIndex(of: viewControllers!.first as! UIPageVC) ?? 0
+        var randomIndex = Int.random(in: 0..<controllers.count)
+        while randomIndex == currentIndex {
+            randomIndex = Int.random(in: 0..<controllers.count)
+        }
+        let direction = randomIndex > currentIndex ? UIPageViewController.NavigationDirection.forward : .reverse
+        let vc = controllers[randomIndex]
+        
+        setViewControllers([vc], direction: direction, animated: true)
     }
     
     
+    
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
-        let currentImageName = (viewController as! UIPageVC).imageName
-        let currentIndex = imageNames.index(of: currentImageName!)
+        let currentIndex = (viewController as! UIPageVC).prizeIndex
+        
         
         if currentIndex! > 0{
             let frameViewController = UIPageVC()
-            frameViewController.imageName = imageNames[currentIndex! - 1]
+            frameViewController.prizeIndex = currentIndex! - 1
             return frameViewController
         }
         
@@ -70,12 +79,11 @@ class ProjectorPageViewController: UIPageViewController, UIPageViewControllerDat
     
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
         
-        let currentImageName = (viewController as! UIPageVC).imageName
-        let currentIndex = imageNames.index(of: currentImageName!)
+        let currentIndex = (viewController as! UIPageVC).prizeIndex
         
         if currentIndex! < imageNames.count - 1{
             let frameViewController = UIPageVC()
-            frameViewController.imageName = imageNames[currentIndex! + 1]
+            frameViewController.prizeIndex = currentIndex! + 1
             return frameViewController
         }
         
@@ -85,9 +93,12 @@ class ProjectorPageViewController: UIPageViewController, UIPageViewControllerDat
 }
 
 class UIPageVC: UIViewController {
-    var imageName: String? {
-        didSet{
-            imageView.image = UIImage(named: imageName!)
+    
+    var prizeIndex: Int? {
+        didSet {
+            let imageName = "toys_retro_\(prizeIndex!)"
+            imageView.image = UIImage(named: imageName)
+            //prizeLabel.text = "Prize \(prizeIndex ?? 0)"
         }
     }
     
